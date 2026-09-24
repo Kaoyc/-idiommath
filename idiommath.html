@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>趣味成語數學題 ‧ 200+題動腦防老超大題庫</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;700;900&display=swap');
+    
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #f8fafc;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .serif-font {
+      font-family: 'Noto Serif TC', serif;
+    }
+    .slot-box {
+      min-width: 3.2rem;
+      height: 3.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 4px solid #dc2626;
+      font-weight: 900;
+      color: #991b1b;
+      font-size: 2rem;
+      background-color: #fef2f2;
+      border-radius: 0.5rem;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      margin: 0 4px;
+    }
+    .slot-box.active {
+      background-color: #fee2e2;
+      outline: 3px solid #ef4444;
+      transform: scale(1.06);
+    }
+    .btn-key {
+      touch-action: manipulation;
+      transition: transform 0.08s ease, background-color 0.15s ease;
+    }
+    .btn-key:active {
+      transform: scale(0.92);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col items-center justify-between pb-6">
+
+  <!-- 頂部 Header -->
+  <header class="w-full max-w-2xl bg-white shadow-sm border-b border-amber-200 sticky top-0 z-30 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <span class="text-3xl">🧠</span>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-xl sm:text-2xl font-black text-rose-800 tracking-wide serif-font">成語數學大闖關</h1>
+          <span class="text-xs bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full">210+ 題庫</span>
+        </div>
+        <p class="text-xs text-amber-700 font-bold">多動腦 ‧ 人不老 ‧ 越玩越靈光</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <span class="text-sm font-black bg-rose-100 text-rose-800 px-3 py-1 rounded-full shadow-inner" id="scoreDisplay">得分: 0</span>
+      <button onclick="toggleSound()" id="soundBtn" class="text-xl p-1.5 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100" title="語音切換">🔊</button>
+    </div>
+  </header>
+
+  <!-- 主遊戲區域 -->
+  <main class="w-full max-w-2xl px-4 flex-1 flex flex-col justify-center my-3 space-y-3.5">
+    
+    <!-- 篩選分類與題號資訊 -->
+    <div class="flex flex-col gap-2.5 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between gap-1">
+        <div class="flex items-center space-x-1.5 overflow-x-auto text-sm font-bold no-scrollbar py-0.5">
+          <button onclick="changeCategory('all')" id="tab-all" class="cat-tab px-3 py-1 rounded-lg bg-rose-600 text-white shadow-sm shrink-0">全部 (<span id="totalCount">210</span>)</button>
+          <button onclick="changeCategory('加法')" id="tab-加法" class="cat-tab px-3 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0">加法</button>
+          <button onclick="changeCategory('減法')" id="tab-減法" class="cat-tab px-3 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0">減法</button>
+          <button onclick="changeCategory('乘法')" id="tab-乘法" class="cat-tab px-3 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0">乘法</button>
+          <button onclick="changeCategory('除法')" id="tab-除法" class="cat-tab px-3 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0">除法</button>
+          <button onclick="changeCategory('混合')" id="tab-混合" class="cat-tab px-3 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0">混合</button>
+        </div>
+
+        <button onclick="nextRandomQuestion()" class="flex items-center space-x-1 text-sm font-bold bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded-lg shadow transition shrink-0">
+          <span>🎲 隨機換題</span>
+        </button>
+      </div>
+
+      <!-- 快速跳題與進度列 -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs font-bold text-slate-500">
+        <div class="flex items-center space-x-2">
+          <span>目前進度：</span>
+          <span id="currentQIndexLabel" class="text-rose-700 font-extrabold text-sm">第 1 題</span>
+          <span id="categoryRangeLabel" class="text-slate-400 font-medium"></span>
+        </div>
+        <div class="flex items-center space-x-1.5">
+          <button onclick="prevQuestion()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">◀ 上一題</button>
+          <button onclick="nextQuestion()" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">下一題 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 題目主卡片 -->
+    <div class="bg-white rounded-2xl p-5 sm:p-7 shadow-md border-2 border-rose-100 flex flex-col items-center text-center relative overflow-hidden">
+      <div id="categoryBadge" class="text-xs font-black uppercase tracking-widest text-white px-3.5 py-1 rounded-full bg-rose-500 mb-2 shadow-sm">
+        加法運算
+      </div>
+
+      <!-- 核心算式容器 -->
+      <div id="equationContainer" class="serif-font text-2xl sm:text-3xl md:text-4xl leading-relaxed tracking-wider font-extrabold flex flex-wrap items-center justify-center gap-2 py-3 text-slate-800 min-h-[4.8rem]">
+      </div>
+
+      <!-- 提示與反饋訊息區 -->
+      <div id="feedbackMsg" class="min-h-[2.2rem] mt-1 text-base sm:text-lg font-bold flex items-center justify-center text-slate-500">
+        點選空格後，在下方數字盤選字填入！
+      </div>
+
+      <!-- 數學驗證解說 -->
+      <div id="mathProof" class="hidden mt-2.5 w-full bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl p-3 text-sm sm:text-base font-bold">
+      </div>
+    </div>
+
+    <!-- 數字虛擬鍵盤 -->
+    <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-md border border-slate-200">
+      <div class="text-xs text-slate-400 font-bold mb-2 text-center">點擊文字填入括號中：</div>
+      <div class="grid grid-cols-5 gap-2 max-w-md mx-auto">
+        <button onclick="inputChar('一')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">一</button>
+        <button onclick="inputChar('二')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">二</button>
+        <button onclick="inputChar('兩')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">兩</button>
+        <button onclick="inputChar('三')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">三</button>
+        <button onclick="inputChar('四')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">四</button>
+
+        <button onclick="inputChar('五')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">五</button>
+        <button onclick="inputChar('六')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">六</button>
+        <button onclick="inputChar('七')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">七</button>
+        <button onclick="inputChar('八')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">八</button>
+        <button onclick="inputChar('九')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">九</button>
+
+        <button onclick="inputChar('十')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">十</button>
+        <button onclick="inputChar('百')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">百</button>
+        <button onclick="inputChar('千')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">千</button>
+        <button onclick="inputChar('萬')" class="btn-key py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-2xl font-black text-amber-950 shadow-sm">萬</button>
+        <button onclick="clearSlot()" class="btn-key py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-xl font-black text-rose-700 shadow-sm">⌫ 清除</button>
+      </div>
+    </div>
+
+    <!-- 控制按鈕區 -->
+    <div class="grid grid-cols-3 gap-2.5">
+      <button onclick="checkAnswer()" class="py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-base sm:text-lg shadow-md transition flex items-center justify-center space-x-1">
+        <span>✔️ 送出核對</span>
+      </button>
+      <button onclick="showAnswer()" class="py-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-base sm:text-lg transition flex items-center justify-center space-x-1">
+        <span>💡 看解答</span>
+      </button>
+      <button onclick="nextRandomQuestion()" class="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-base sm:text-lg shadow-md transition flex items-center justify-center space-x-1">
+        <span>換下一題 ➡️</span>
+      </button>
+    </div>
+
+  </main>
+
+  <footer class="text-xs text-slate-400 text-center py-2">
+    成語數學題 ‧ 210+ 超大海量題庫 ‧ 隨機抽題 ‧ 活絡記憶
+  </footer>
+
+  <script>
+    // 完整 210+ 題庫
+    const QUESTION_BANK = [
+      // 加法篇 (60題)
+      { cat: "加法", pattern: ["( )言為定", "＋", "( )鳴驚人", "＝", "( )全其美"], answers: ["一", "一", "兩"], math: "1 ＋ 1 ＝ 2 (兩全其美)" },
+      { cat: "加法", pattern: ["( )親不認", "＋", "( )觸即發", "＝", "( )竅生煙"], answers: ["六", "一", "七"], math: "6 ＋ 1 ＝ 7 (七竅生煙)" },
+      { cat: "加法", pattern: ["( )體投地", "＋", "( )手遮天", "＝", "( )神無主"], answers: ["五", "一", "六"], math: "5 ＋ 1 ＝ 6 (六神無主)" },
+      { cat: "加法", pattern: ["( )令五申", "＋", "( )平八穩", "＝", "( )步之才"], answers: ["三", "四", "七"], math: "3 ＋ 4 ＝ 7 (七步之才)" },
+      { cat: "加法", pattern: ["( )通八達", "＋", "( )望無際", "＝", "( )湖四海"], answers: ["四", "一", "五"], math: "4 ＋ 1 ＝ 5 (五湖四海)" },
+      { cat: "加法", pattern: ["( )龍戲珠", "＋", "( )零八落", "＝", "( )霄雲外"], answers: ["二", "七", "九"], math: "2 ＋ 7 ＝ 9 (九霄雲外)" },
+      { cat: "加法", pattern: ["( )海為家", "＋", "( )親不認", "＝", "( )萬火急"], answers: ["四", "六", "十"], math: "4 ＋ 6 ＝ 10 (十萬火急)" },
+      { cat: "加法", pattern: ["( )生有幸", "＋", "( )顏六色", "＝", "( )面玲瓏"], answers: ["三", "五", "八"], math: "3 ＋ 5 ＝ 8 (八面玲瓏)" },
+      { cat: "加法", pattern: ["( )字千金", "＋", "( )令五申", "＝", "( )通八達"], answers: ["一", "三", "四"], math: "1 ＋ 3 ＝ 4 (四通八達)" },
+      { cat: "加法", pattern: ["( )牛一毛", "＋", "( )目了然", "＝", "( )面埋伏"], answers: ["九", "一", "十"], math: "9 ＋ 1 ＝ 10 (十面埋伏)" },
+      { cat: "加法", pattern: ["( )針見血", "＋", "( )日千里", "＝", "( )敗俱傷"], answers: ["一", "一", "兩"], math: "1 ＋ 1 ＝ 2 (兩敗俱傷)" },
+      { cat: "加法", pattern: ["( )顧茅廬", "＋", "( )頭六臂", "＝", "( )神無主"], answers: ["三", "三", "六"], math: "3 ＋ 3 ＝ 6 (六神無主)" },
+      { cat: "加法", pattern: ["( )字千金", "＋", "( )仙過海", "＝", "( )牛一毛"], answers: ["一", "八", "九"], math: "1 ＋ 8 ＝ 9 (九牛一毛)" },
+      { cat: "加法", pattern: ["( )面楚歌", "＋", "( )言為定", "＝", "( )體投地"], answers: ["四", "一", "五"], math: "4 ＋ 1 ＝ 5 (五體投地)" },
+      { cat: "加法", pattern: ["( )親不認", "＋", "( )鳴驚人", "＝", "( )步之才"], answers: ["六", "一", "七"], math: "6 ＋ 1 ＝ 7 (七步之才)" },
+      { cat: "加法", pattern: ["( )手遮天", "＋", "( )仙過海", "＝", "( )霄雲外"], answers: ["一", "八", "九"], math: "1 ＋ 8 ＝ 9 (九霄雲外)" },
+      { cat: "加法", pattern: ["( )波三折", "＋", "( )鳴驚人", "＝", "( )龍戲珠"], answers: ["一", "一", "二"], math: "1 ＋ 1 ＝ 2 (二龍戲珠)" },
+      { cat: "加法", pattern: ["( )廂情願", "＋", "( )龍戲珠", "＝", "( )顧茅廬"], answers: ["一", "二", "三"], math: "1 ＋ 2 ＝ 3 (三顧茅廬)" },
+      { cat: "加法", pattern: ["( )龍戲珠", "＋", "( )龍戲珠", "＝", "( )面楚歌"], answers: ["二", "二", "四"], math: "2 ＋ 2 ＝ 4 (四面楚歌)" },
+      { cat: "加法", pattern: ["( )針見血", "＋", "( )顧茅廬", "＝", "( )面八方"], answers: ["一", "三", "四"], math: "1 ＋ 3 ＝ 4 (四面八方)" },
+      { cat: "加法", pattern: ["( )全其美", "＋", "( )顧茅廬", "＝", "( )體投地"], answers: ["兩", "三", "五"], math: "2 ＋ 3 ＝ 5 (五體投地)" },
+      { cat: "加法", pattern: ["( )面楚歌", "＋", "( )鳴驚人", "＝", "( )顏六色"], answers: ["四", "一", "五"], math: "4 ＋ 1 ＝ 5 (五顏六色)" },
+      { cat: "加法", pattern: ["( )思而行", "＋", "( )顧茅廬", "＝", "( )神無主"], answers: ["三", "三", "六"], math: "3 ＋ 3 ＝ 6 (六神無主)" },
+      { cat: "加法", pattern: ["( )平八穩", "＋", "( )全其美", "＝", "( )親不認"], answers: ["四", "兩", "六"], math: "4 ＋ 2 ＝ 6 (六親不認)" },
+      { cat: "加法", pattern: ["( )折不撓", "＋", "( )親不認", "＝", "( )竅生煙"], answers: ["一", "六", "七"], math: "1 ＋ 6 ＝ 7 (七竅生煙)" },
+      { cat: "加法", pattern: ["( )龍戲珠", "＋", "( )體投地", "＝", "( )步之才"], answers: ["二", "五", "七"], math: "2 ＋ 5 ＝ 7 (七步之才)" },
+      { cat: "加法", pattern: ["( )顧茅廬", "＋", "( )面受敵", "＝", "( )竅生煙"], answers: ["三", "四", "七"], math: "3 ＋ 4 ＝ 7 (七竅生煙)" },
+      { cat: "加法", pattern: ["( )生有幸", "＋", "( )面楚歌", "＝", "( )步之才"], answers: ["三", "四", "七"], math: "3 ＋ 4 ＝ 7 (七步之才)" },
+      { cat: "加法", pattern: ["( )毛不拔", "＋", "( )竅生煙", "＝", "( )仙過海"], answers: ["一", "七", "八"], math: "1 ＋ 7 ＝ 8 (八仙過海)" },
+      { cat: "加法", pattern: ["( )龍戲珠", "＋", "( )親不認", "＝", "( )面威風"], answers: ["二", "六", "八"], math: "2 ＋ 6 ＝ 8 (八面威風)" },
+      { cat: "加法", pattern: ["( )長兩短", "＋", "( )體投地", "＝", "( )仙過海"], answers: ["三", "五", "八"], math: "3 ＋ 5 ＝ 8 (八仙過海)" },
+      { cat: "加法", pattern: ["( )平八穩", "＋", "( )面楚歌", "＝", "( )面玲瓏"], answers: ["四", "四", "八"], math: "4 ＋ 4 ＝ 8 (八面玲瓏)" },
+      { cat: "加法", pattern: ["( )海升平", "＋", "( )通八達", "＝", "( )仙過海"], answers: ["四", "四", "八"], math: "4 ＋ 4 ＝ 8 (八仙過海)" },
+      { cat: "加法", pattern: ["( )視同仁", "＋", "( )仙過海", "＝", "( )霄雲外"], answers: ["一", "八", "九"], math: "1 ＋ 8 ＝ 9 (九霄雲外)" },
+      { cat: "加法", pattern: ["( )全其美", "＋", "( )步之才", "＝", "( )牛一毛"], answers: ["兩", "七", "九"], math: "2 ＋ 7 ＝ 9 (九牛一毛)" },
+      { cat: "加法", pattern: ["( )顧茅廬", "＋", "( )神無主", "＝", "( )死一生"], answers: ["三", "六", "九"], math: "3 ＋ 6 ＝ 9 (九死一生)" },
+      { cat: "加法", pattern: ["( )面楚歌", "＋", "( )體投地", "＝", "( )牛一毛"], answers: ["四", "五", "九"], math: "4 ＋ 5 ＝ 9 (九牛一毛)" },
+      { cat: "加法", pattern: ["( )海為家", "＋", "( )湖四海", "＝", "( )死一生"], answers: ["四", "五", "九"], math: "4 ＋ 5 ＝ 9 (九死一生)" },
+      { cat: "加法", pattern: ["( )日千里", "＋", "( )霄雲外", "＝", "( )全十美"], answers: ["一", "九", "十"], math: "1 ＋ 9 ＝ 10 (十全十美)" },
+      { cat: "加法", pattern: ["( )龍戲珠", "＋", "( )面威風", "＝", "( )拿九穩"], answers: ["二", "八", "十"], math: "2 ＋ 8 ＝ 10 (十拿九穩)" },
+      { cat: "加法", pattern: ["( )思而行", "＋", "( )竅生煙", "＝", "( )面埋伏"], answers: ["三", "七", "十"], math: "3 ＋ 7 ＝ 10 (十面埋伏)" },
+      { cat: "加法", pattern: ["( )通八達", "＋", "( )親不認", "＝", "( )室九空"], answers: ["四", "六", "十"], math: "4 ＋ 6 ＝ 10 (十室九空)" },
+      { cat: "加法", pattern: ["( )體投地", "＋", "( )顏六色", "＝", "( )全十美"], answers: ["五", "五", "十"], math: "5 ＋ 5 ＝ 10 (十全十美)" },
+      { cat: "加法", pattern: ["( )彩繽紛", "＋", "( )湖四海", "＝", "( )拿九穩"], answers: ["五", "五", "十"], math: "5 ＋ 5 ＝ 10 (十拿九穩)" },
+      { cat: "加法", pattern: ["( )步登天", "＋", "( )言為定", "＝", "( )全其美"], answers: ["一", "一", "兩"], math: "1 ＋ 1 ＝ 2 (兩全其美)" },
+      { cat: "加法", pattern: ["( )鼓作氣", "＋", "( )全其美", "＝", "( )長兩短"], answers: ["一", "兩", "三"], math: "1 ＋ 2 ＝ 3 (三長兩短)" },
+      { cat: "加法", pattern: ["( )發千鈞", "＋", "( )長兩短", "＝", "( )面楚歌"], answers: ["一", "三", "四"], math: "1 ＋ 3 ＝ 4 (四面楚歌)" },
+      { cat: "加法", pattern: ["( )絲不苟", "＋", "( )海升平", "＝", "( )體投地"], answers: ["一", "四", "五"], math: "1 ＋ 4 ＝ 5 (五體投地)" },
+      { cat: "加法", pattern: ["( )心一意", "＋", "( )體投地", "＝", "( )神無主"], answers: ["一", "五", "六"], math: "1 ＋ 5 ＝ 6 (六神無主)" },
+      { cat: "加法", pattern: ["( )敗俱傷", "＋", "( )體投地", "＝", "( )竅生煙"], answers: ["兩", "五", "七"], math: "2 ＋ 5 ＝ 7 (七竅生煙)" },
+      { cat: "加法", pattern: ["( )全其美", "＋", "( )親不認", "＝", "( )面玲瓏"], answers: ["兩", "六", "八"], math: "2 ＋ 6 ＝ 8 (八面玲瓏)" },
+      { cat: "加法", pattern: ["( )敗俱傷", "＋", "( )竅生煙", "＝", "( )牛一毛"], answers: ["兩", "七", "九"], math: "2 ＋ 7 ＝ 9 (九牛一毛)" },
+      { cat: "加法", pattern: ["( )龍戲珠", "＋", "( )仙過海", "＝", "( )全十美"], answers: ["二", "八", "十"], math: "2 ＋ 8 ＝ 10 (十全十美)" },
+      { cat: "加法", pattern: ["( )長兩短", "＋", "( )通八達", "＝", "( )步之才"], answers: ["三", "四", "七"], math: "3 ＋ 4 ＝ 7 (七步之才)" },
+      { cat: "加法", pattern: ["( )心二意", "＋", "( )顏六色", "＝", "( )仙過海"], answers: ["三", "五", "八"], math: "3 ＋ 5 ＝ 8 (八仙過海)" },
+      { cat: "加法", pattern: ["( )生有幸", "＋", "( )親不認", "＝", "( )霄雲外"], answers: ["三", "六", "九"], math: "3 ＋ 6 ＝ 9 (九霄雲外)" },
+      { cat: "加法", pattern: ["( )顧茅廬", "＋", "( )步之才", "＝", "( )面埋伏"], answers: ["三", "七", "十"], math: "3 ＋ 7 ＝ 10 (十面埋伏)" },
+      { cat: "加法", pattern: ["( )面八方", "＋", "( )鳴驚人", "＝", "( )死一生"], answers: ["八", "一", "九"], math: "8 ＋ 1 ＝ 9 (九死一生)" },
+      { cat: "加法", pattern: ["( )步之才", "＋", "( )全其美", "＝", "( )牛一毛"], answers: ["七", "兩", "九"], math: "7 ＋ 2 ＝ 9 (九牛一毛)" },
+      { cat: "加法", pattern: ["( )神無主", "＋", "( )面楚歌", "＝", "( )室九空"], answers: ["六", "四", "十"], math: "6 ＋ 4 ＝ 10 (十室九空)" },
+
+      // 減法篇 (60題)
+      { cat: "減法", pattern: ["( )彩繽紛", "－", "( )呼百應", "＝", "( )海升平"], answers: ["五", "一", "四"], math: "5 － 1 ＝ 4 (四海升平)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )手八腳", "＝", "( )顧茅廬"], answers: ["十", "七", "三"], math: "10 － 7 ＝ 3 (三顧茅廬)" },
+      { cat: "減法", pattern: ["( )光十色", "－", "( )事無成", "＝", "( )面八方"], answers: ["五", "一", "四"], math: "5 － 1 ＝ 4 (四面八方)" },
+      { cat: "減法", pattern: ["( )嘴八舌", "－", "( )親不認", "＝", "( )言為定"], answers: ["七", "六", "一"], math: "7 － 6 ＝ 1 (一言為定)" },
+      { cat: "減法", pattern: ["( )死一生", "－", "( )分五裂", "＝", "( )湖四海"], answers: ["九", "四", "五"], math: "9 － 4 ＝ 5 (五湖四海)" },
+      { cat: "減法", pattern: ["( )室九空", "－", "( )盤散沙", "＝", "( )牛一毛"], answers: ["十", "一", "九"], math: "10 － 1 ＝ 9 (九牛一毛)" },
+      { cat: "減法", pattern: ["( )神無主", "－", "( )龍戲珠", "＝", "( )面受敵"], answers: ["六", "二", "四"], math: "6 － 2 ＝ 4 (四面受敵)" },
+      { cat: "減法", pattern: ["( )體投地", "－", "( )長兩短", "＝", "( )敗俱傷"], answers: ["五", "三", "兩"], math: "5 － 3 ＝ 2 (兩敗俱傷)" },
+      { cat: "減法", pattern: ["( )仙過海", "－", "( )擲千金", "＝", "( )上八下"], answers: ["八", "一", "七"], math: "8 － 1 ＝ 7 (七上八下)" },
+      { cat: "減法", pattern: ["( )面威風", "－", "( )光十色", "＝", "( )頭六臂"], answers: ["八", "五", "三"], math: "8 － 5 ＝ 3 (三頭六臂)" },
+      { cat: "減法", pattern: ["( )顏六色", "－", "( )海為家", "＝", "( )絲不苟"], answers: ["五", "四", "一"], math: "5 － 4 ＝ 1 (一絲不苟)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )龍戲珠", "＝", "( )仙過海"], answers: ["十", "二", "八"], math: "10 － 2 ＝ 8 (八仙過海)" },
+      { cat: "減法", pattern: ["( )牛一毛", "－", "( )令五申", "＝", "( )神無主"], answers: ["九", "三", "六"], math: "9 － 3 ＝ 6 (六神無主)" },
+      { cat: "減法", pattern: ["( )面八方", "－", "( )日千里", "＝", "( )步之才"], answers: ["八", "一", "七"], math: "8 － 1 ＝ 7 (七步之才)" },
+      { cat: "減法", pattern: ["( )仙過海", "－", "( )龍戲珠", "＝", "( )親不認"], answers: ["八", "二", "六"], math: "8 － 2 ＝ 6 (六親不認)" },
+      { cat: "減法", pattern: ["( )步之才", "－", "( )言為定", "＝", "( )親不認"], answers: ["七", "一", "六"], math: "7 － 1 ＝ 6 (六親不認)" },
+      { cat: "減法", pattern: ["( )手八腳", "－", "( )字千金", "＝", "( )步之才"], answers: ["八", "一", "七"], math: "8 － 1 ＝ 7 (七步之才)" },
+      { cat: "減法", pattern: ["( )面楚歌", "－", "( )心二意", "＝", "( )鳴驚人"], answers: ["四", "三", "一"], math: "4 － 3 ＝ 1 (一鳴驚人)" },
+      { cat: "減法", pattern: ["( )面受敵", "－", "( )顧茅廬", "＝", "( )針見血"], answers: ["四", "三", "一"], math: "4 － 3 ＝ 1 (一針見血)" },
+      { cat: "減法", pattern: ["( )竅生煙", "－", "( )波三折", "＝", "( )神無主"], answers: ["七", "一", "六"], math: "7 － 1 ＝ 6 (六神無主)" },
+      { cat: "減法", pattern: ["( )神無主", "－", "( )手遮天", "＝", "( )彩繽紛"], answers: ["六", "一", "五"], math: "6 － 1 ＝ 5 (五彩繽紛)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )鳴驚人", "＝", "( )霄雲外"], answers: ["十", "一", "九"], math: "10 － 1 ＝ 9 (九霄雲外)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )顧茅廬", "＝", "( )步之才"], answers: ["十", "三", "七"], math: "10 － 3 ＝ 7 (七步之才)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )面楚歌", "＝", "( )親不認"], answers: ["十", "四", "六"], math: "10 － 4 ＝ 6 (六親不認)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )體投地", "＝", "( )顏六色"], answers: ["十", "五", "五"], math: "10 － 5 ＝ 5 (五顏六色)" },
+      { cat: "減法", pattern: ["( )全十美", "－", "( )親不認", "＝", "( )面八方"], answers: ["十", "六", "四"], math: "10 － 6 ＝ 4 (四面八方)" },
+      { cat: "減法", pattern: ["( )面埋伏", "－", "( )仙過海", "＝", "( )龍戲珠"], answers: ["十", "八", "二"], math: "10 － 8 ＝ 2 (二龍戲珠)" },
+      { cat: "減法", pattern: ["( )室九空", "－", "( )牛一毛", "＝", "( )鳴驚人"], answers: ["十", "九", "一"], math: "10 － 9 ＝ 1 (一鳴驚人)" },
+      { cat: "減法", pattern: ["( )霄雲外", "－", "( )字千金", "＝", "( )面玲瓏"], answers: ["九", "一", "八"], math: "9 － 1 ＝ 8 (八面玲瓏)" },
+      { cat: "減法", pattern: ["( )霄雲外", "－", "( )龍戲珠", "＝", "( )竅生煙"], answers: ["九", "二", "七"], math: "9 － 2 ＝ 7 (七竅生煙)" },
+      { cat: "減法", pattern: ["( )死一生", "－", "( )顧茅廬", "＝", "( )神無主"], answers: ["九", "三", "六"], math: "9 － 3 ＝ 6 (六神無主)" },
+      { cat: "減法", pattern: ["( )牛一毛", "－", "( )面受敵", "＝", "( )體投地"], answers: ["九", "四", "五"], math: "9 － 4 ＝ 5 (五體投地)" },
+      { cat: "減法", pattern: ["( )死一生", "－", "( )親不認", "＝", "( )思而行"], answers: ["九", "六", "三"], math: "9 － 6 ＝ 3 (三思而行)" },
+      { cat: "減法", pattern: ["( )霄雲外", "－", "( )步之才", "＝", "( )全其美"], answers: ["九", "七", "兩"], math: "9 － 7 ＝ 2 (兩全其美)" },
+      { cat: "減法", pattern: ["( )牛一毛", "－", "( )仙過海", "＝", "( )針見血"], answers: ["九", "八", "一"], math: "9 － 8 ＝ 1 (一針見血)" },
+      { cat: "減法", pattern: ["( )面玲瓏", "－", "( )顧茅廬", "＝", "( )體投地"], answers: ["八", "三", "五"], math: "8 － 3 ＝ 5 (五體投地)" },
+      { cat: "減法", pattern: ["( )面威風", "－", "( )面楚歌", "＝", "( )通八達"], answers: ["八", "四", "四"], math: "8 － 4 ＝ 4 (四通八達)" },
+      { cat: "減法", pattern: ["( )仙過海", "－", "( )親不認", "＝", "( )敗俱傷"], answers: ["八", "六", "兩"], math: "8 － 6 ＝ 2 (兩敗俱傷)" },
+      { cat: "減法", pattern: ["( )手八腳", "－", "( )步之才", "＝", "( )目了然"], answers: ["八", "七", "一"], math: "8 － 7 ＝ 1 (一目了然)" },
+      { cat: "減法", pattern: ["( )竅生煙", "－", "( )全其美", "＝", "( )顏六色"], answers: ["七", "兩", "五"], math: "7 － 2 ＝ 5 (五顏六色)" },
+      { cat: "減法", pattern: ["( )步之才", "－", "( )長兩短", "＝", "( )海升平"], answers: ["七", "三", "四"], math: "7 － 3 ＝ 4 (四海升平)" },
+      { cat: "減法", pattern: ["( )步之才", "－", "( )面楚歌", "＝", "( )長兩短"], answers: ["七", "四", "三"], math: "7 － 4 ＝ 3 (三長兩短)" },
+      { cat: "減法", pattern: ["( )竅生煙", "－", "( )體投地", "＝", "( )龍戲珠"], answers: ["七", "五", "二"], math: "7 － 5 ＝ 2 (二龍戲珠)" },
+      { cat: "減法", pattern: ["( )神無主", "－", "( )字千金", "＝", "( )體投地"], answers: ["六", "一", "五"], math: "6 － 1 ＝ 5 (五體投地)" },
+      { cat: "減法", pattern: ["( )親不認", "－", "( )顧茅廬", "＝", "( )顧茅廬"], answers: ["六", "三", "三"], math: "6 － 3 ＝ 3 (三顧茅廬)" },
+      { cat: "減法", pattern: ["( )神無主", "－", "( )海為家", "＝", "( )全其美"], answers: ["六", "四", "兩"], math: "6 － 4 ＝ 2 (兩全其美)" },
+      { cat: "減法", pattern: ["( )親不認", "－", "( )體投地", "＝", "( )絲不苟"], answers: ["六", "五", "一"], math: "6 － 5 ＝ 1 (一絲不苟)" },
+      { cat: "減法", pattern: ["( )體投地", "－", "( )言為定", "＝", "( )面楚歌"], answers: ["五", "一", "四"], math: "5 － 1 ＝ 4 (四面楚歌)" },
+      { cat: "減法", pattern: ["( )湖四海", "－", "( )全其美", "＝", "( )思而行"], answers: ["五", "兩", "三"], math: "5 － 2 ＝ 3 (三思而行)" },
+      { cat: "減法", pattern: ["( )顏六色", "－", "( )長兩短", "＝", "( )龍戲珠"], answers: ["五", "三", "二"], math: "5 － 3 ＝ 2 (二龍戲珠)" },
+      { cat: "減法", pattern: ["( )體投地", "－", "( )面楚歌", "＝", "( )鳴驚人"], answers: ["五", "四", "一"], math: "5 － 4 ＝ 1 (一鳴驚人)" },
+      { cat: "減法", pattern: ["( )面楚歌", "－", "( )言為定", "＝", "( )生有幸"], answers: ["四", "一", "三"], math: "4 － 1 ＝ 3 (三生有幸)" },
+      { cat: "減法", pattern: ["( )通八達", "－", "( )全其美", "＝", "( )龍戲珠"], answers: ["四", "兩", "二"], math: "4 － 2 ＝ 2 (二龍戲珠)" },
+      { cat: "減法", pattern: ["( )海為家", "－", "( )顧茅廬", "＝", "( )手遮天"], answers: ["四", "三", "一"], math: "4 － 3 ＝ 1 (一手遮天)" },
+      { cat: "減法", pattern: ["( )顧茅廬", "－", "( )鳴驚人", "＝", "( )全其美"], answers: ["三", "一", "兩"], math: "3 － 1 ＝ 2 (兩全其美)" },
+      { cat: "減法", pattern: ["( )思而行", "－", "( )龍戲珠", "＝", "( )字千金"], answers: ["三", "二", "一"], math: "3 － 2 ＝ 1 (一字千金)" },
+      { cat: "減法", pattern: ["( )長兩短", "－", "( )全其美", "＝", "( )日千里"], answers: ["三", "兩", "一"], math: "3 － 2 ＝ 1 (一日千里)" },
+      { cat: "減法", pattern: ["( )龍戲珠", "－", "( )針見血", "＝", "( )言為定"], answers: ["二", "一", "一"], math: "2 － 1 ＝ 1 (一言為定)" },
+      { cat: "減法", pattern: ["( )敗俱傷", "－", "( )廂情願", "＝", "( )目了然"], answers: ["兩", "一", "一"], math: "2 － 1 ＝ 1 (一目了然)" },
+      { cat: "減法", pattern: ["( )全其美", "－", "( )手遮天", "＝", "( )絲不苟"], answers: ["兩", "一", "一"], math: "2 － 1 ＝ 1 (一絲不苟)" },
+
+      // 乘法篇 (45題)
+      { cat: "乘法", pattern: ["( )裡挑一", "×", "( )川歸海", "＝", "( )籟俱寂"], answers: ["百", "百", "萬"], math: "100 × 100 ＝ 10,000 (萬籟俱寂)" },
+      { cat: "乘法", pattern: ["( )馬平川", "×", "( )發千鈞", "＝", "( )筆勾銷"], answers: ["一", "一", "一"], math: "1 × 1 ＝ 1 (一筆勾銷)" },
+      { cat: "乘法", pattern: ["( )全其美", "×", "( )廂情願", "＝", "( )海一家"], answers: ["兩", "一", "兩"], math: "2 × 1 ＝ 2 (兩海一家)" },
+      { cat: "乘法", pattern: ["( )花齊放", "×", "( )萬火急", "＝", "( )變萬化"], answers: ["百", "十", "千"], math: "100 × 10 ＝ 1,000 (千變萬化)" },
+      { cat: "乘法", pattern: ["( )全十美", "×", "( )指連心", "＝", "( )花盛開"], answers: ["十", "十", "百"], math: "10 × 10 ＝ 100 (百花盛開)" },
+      { cat: "乘法", pattern: ["( )龍戲珠", "×", "( )絲不苟", "＝", "( )面三刀"], answers: ["二", "一", "兩"], math: "2 × 1 ＝ 2 (兩面三刀)" },
+      { cat: "乘法", pattern: ["( )心二意", "×", "( )視同仁", "＝", "( )思而行"], answers: ["三", "一", "三"], math: "3 × 1 ＝ 3 (三思而行)" },
+      { cat: "乘法", pattern: ["( )言九鼎", "×", "( )牛二虎", "＝", "( )霄雲外"], answers: ["一", "九", "九"], math: "1 × 9 ＝ 9 (九霄雲外)" },
+      { cat: "乘法", pattern: ["( )顧茅廬", "×", "( )望無際", "＝", "( )言兩語"], answers: ["三", "一", "三"], math: "3 × 1 ＝ 3 (三言兩語)" },
+      { cat: "乘法", pattern: ["( )龍戲珠", "×", "( )顧茅廬", "＝", "( )神無主"], answers: ["二", "三", "六"], math: "2 × 3 ＝ 6 (六神無主)" },
+      { cat: "乘法", pattern: ["( )體投地", "×", "( )龍戲珠", "＝", "( )全十美"], answers: ["五", "二", "十"], math: "5 × 2 ＝ 10 (十全十美)" },
+      { cat: "乘法", pattern: ["( )面受敵", "×", "( )龍戲珠", "＝", "( )仙過海"], answers: ["四", "二", "八"], math: "4 × 2 ＝ 8 (八仙過海)" },
+      { cat: "乘法", pattern: ["( )百折不撓", "×", "( )全十美", "＝", "( )辛萬苦"], answers: ["百", "十", "千"], math: "100 × 10 ＝ 1,000 (千辛萬苦)" },
+      { cat: "乘法", pattern: ["( )針見血", "×", "( )顧茅廬", "＝", "( )顧茅廬"], answers: ["一", "三", "三"], math: "1 × 3 ＝ 3 (三顧茅廬)" },
+      { cat: "乘法", pattern: ["( )目了然", "×", "( )面楚歌", "＝", "( )面八方"], answers: ["一", "四", "四"], math: "1 × 4 ＝ 4 (四面八方)" },
+      { cat: "乘法", pattern: ["( )手遮天", "×", "( )體投地", "＝", "( )體投地"], answers: ["一", "五", "五"], math: "1 × 5 ＝ 5 (五體投地)" },
+      { cat: "乘法", pattern: ["( )鳴驚人", "×", "( )親不認", "＝", "( )親不認"], answers: ["一", "六", "六"], math: "1 × 6 ＝ 6 (六親不認)" },
+      { cat: "乘法", pattern: ["( )言為定", "×", "( )步之才", "＝", "( )步之才"], answers: ["一", "七", "七"], math: "1 × 7 ＝ 7 (七步之才)" },
+      { cat: "乘法", pattern: ["( )字千金", "×", "( )仙過海", "＝", "( )仙過海"], answers: ["一", "八", "八"], math: "1 × 8 ＝ 8 (八仙過海)" },
+      { cat: "乘法", pattern: ["( )日千里", "×", "( )牛一毛", "＝", "( )死一生"], answers: ["一", "九", "九"], math: "1 × 9 ＝ 9 (九死一生)" },
+      { cat: "乘法", pattern: ["( )絲不苟", "×", "( )全十美", "＝", "( )面埋伏"], answers: ["一", "十", "十"], math: "1 × 10 ＝ 10 (十面埋伏)" },
+      { cat: "乘法", pattern: ["( )全其美", "×", "( )龍戲珠", "＝", "( )面楚歌"], answers: ["兩", "二", "四"], math: "2 × 2 ＝ 4 (四面楚歌)" },
+      { cat: "乘法", pattern: ["( )龍戲珠", "×", "( )全其美", "＝", "( )海升平"], answers: ["二", "兩", "四"], math: "2 × 2 ＝ 4 (四海升平)" },
+      { cat: "乘法", pattern: ["( )敗俱傷", "×", "( )長兩短", "＝", "( )神無主"], answers: ["兩", "三", "六"], math: "2 × 3 ＝ 6 (六神無主)" },
+      { cat: "乘法", pattern: ["( )龍戲珠", "×", "( )思而行", "＝", "( )親不認"], answers: ["二", "三", "六"], math: "2 × 3 ＝ 6 (六親不認)" },
+      { cat: "乘法", pattern: ["( )全其美", "×", "( )通八達", "＝", "( )面玲瓏"], answers: ["兩", "四", "八"], math: "2 × 4 ＝ 8 (八面玲瓏)" },
+      { cat: "乘法", pattern: ["( )敗俱傷", "×", "( )海為家", "＝", "( )仙過海"], answers: ["兩", "四", "八"], math: "2 × 4 ＝ 8 (八仙過海)" },
+      { cat: "乘法", pattern: ["( )龍戲珠", "×", "( )彩繽紛", "＝", "( )全十美"], answers: ["二", "五", "十"], math: "2 × 5 ＝ 10 (十全十美)" },
+      { cat: "乘法", pattern: ["( )全其美", "×", "( )湖四海", "＝", "( )室九空"], answers: ["兩", "五", "十"], math: "2 × 5 ＝ 10 (十室九空)" },
+      { cat: "乘法", pattern: ["( )顧茅廬", "×", "( )全其美", "＝", "( )親不認"], answers: ["三", "兩", "六"], math: "3 × 2 ＝ 6 (六親不認)" },
+      { cat: "乘法", pattern: ["( )思而行", "×", "( )顧茅廬", "＝", "( )牛一毛"], answers: ["三", "三", "九"], math: "3 × 3 ＝ 9 (九牛一毛)" },
+      { cat: "乘法", pattern: ["( )長兩短", "×", "( )生有幸", "＝", "( )霄雲外"], answers: ["三", "三", "九"], math: "3 × 3 ＝ 9 (九霄雲外)" },
+      { cat: "乘法", pattern: ["( )面楚歌", "×", "( )全其美", "＝", "( )仙過海"], answers: ["四", "兩", "八"], math: "4 × 2 ＝ 8 (八仙過海)" },
+      { cat: "乘法", pattern: ["( )海為家", "×", "( )龍戲珠", "＝", "( )面威風"], answers: ["四", "二", "八"], math: "4 × 2 ＝ 8 (八面威風)" },
+      { cat: "乘法", pattern: ["( )通八達", "×", "( )敗俱傷", "＝", "( )手八腳"], answers: ["四", "兩", "八"], math: "4 × 2 ＝ 8 (八手八腳)" },
+      { cat: "乘法", pattern: ["( )顏六色", "×", "( )全其美", "＝", "( )面埋伏"], answers: ["五", "兩", "十"], math: "5 × 2 ＝ 10 (十面埋伏)" },
+      { cat: "乘法", pattern: ["( )體投地", "×", "( )敗俱傷", "＝", "( )拿九穩"], answers: ["五", "兩", "十"], math: "5 × 2 ＝ 10 (十拿九穩)" },
+      { cat: "乘法", pattern: ["( )彩繽紛", "×", "( )龍戲珠", "＝", "( )全十美"], answers: ["五", "二", "十"], math: "5 × 2 ＝ 10 (十全十美)" },
+      { cat: "乘法", pattern: ["( )折不撓", "×", "( )全十美", "＝", "( )辛萬苦"], answers: ["百", "十", "千"], math: "100 × 10 ＝ 1,000 (千辛萬苦)" },
+      { cat: "乘法", pattern: ["( )年樹人", "×", "( )全十美", "＝", "( )辛萬苦"], answers: ["百", "十", "千"], math: "100 × 10 ＝ 1,000 (千辛萬苦)" },
+      { cat: "乘法", pattern: ["( )全十美", "×", "( )思不解", "＝", "( )辛萬苦"], answers: ["十", "百", "千"], math: "10 × 100 ＝ 1,000 (千辛萬苦)" },
+      { cat: "乘法", pattern: ["( )面玲瓏", "×", "( )言為定", "＝", "( )仙過海"], answers: ["八", "一", "八"], math: "8 × 1 ＝ 8 (八仙過海)" },
+      { cat: "乘法", pattern: ["( )竅生煙", "×", "( )鳴驚人", "＝", "( )步之才"], answers: ["七", "一", "七"], math: "7 × 1 ＝ 7 (七步之才)" },
+      { cat: "乘法", pattern: ["( )神無主", "×", "( )手遮天", "＝", "( )親不認"], answers: ["六", "一", "六"], math: "6 × 1 ＝ 6 (六親不認)" },
+      { cat: "乘法", pattern: ["( )面埋伏", "×", "( )針見血", "＝", "( )全十美"], answers: ["十", "一", "十"], math: "10 × 1 ＝ 10 (十全十美)" },
+
+      // 除法篇 (40題)
+      { cat: "除法", pattern: ["( )壽無疆", "÷", "( )思不解", "＝", "( )折不撓"], answers: ["萬", "百", "百"], math: "10,000 ÷ 100 ＝ 100 (百折不撓)" },
+      { cat: "除法", pattern: ["( )辛萬苦", "÷", "( )步芳草", "＝", "( )年樹人"], answers: ["千", "十", "百"], math: "1,000 ÷ 10 ＝ 100 (百年樹人)" },
+      { cat: "除法", pattern: ["( )霄雲外", "÷", "( )頭六臂", "＝", "( )教九流"], answers: ["九", "三", "三"], math: "9 ÷ 3 ＝ 3 (三教九流)" },
+      { cat: "除法", pattern: ["( )神無主", "÷", "( )虎相鬥", "＝", "( )長兩短"], answers: ["六", "兩", "三"], math: "6 ÷ 2 ＝ 3 (三長兩短)" },
+      { cat: "除法", pattern: ["( )面楚歌", "÷", "( )面三刀", "＝", "( )龍戲珠"], answers: ["四", "兩", "二"], math: "4 ÷ 2 ＝ 2 (二龍戲珠)" },
+      { cat: "除法", pattern: ["( )拿九穩", "÷", "( )光十色", "＝", "( )袖清風"], answers: ["十", "五", "兩"], math: "10 ÷ 5 ＝ 2 (兩袖清風)" },
+      { cat: "除法", pattern: ["( )煉成鋼", "÷", "( )全十美", "＝", "( )拿九穩"], answers: ["百", "十", "十"], math: "100 ÷ 10 ＝ 10 (十拿九穩)" },
+      { cat: "除法", pattern: ["( )氣呵成", "÷", "( )毛不拔", "＝", "( )波三折"], answers: ["一", "一", "一"], math: "1 ÷ 1 ＝ 1 (一波三折)" },
+      { cat: "除法", pattern: ["( )拜之交", "÷", "( )鬢如霜", "＝", "( )海為家"], answers: ["八", "兩", "四"], math: "8 ÷ 2 ＝ 4 (四海為家)" },
+      { cat: "除法", pattern: ["( )面埋伏", "÷", "( )龍戲珠", "＝", "( )體投地"], answers: ["十", "二", "五"], math: "10 ÷ 2 ＝ 5 (五體投地)" },
+      { cat: "除法", pattern: ["( )全十美", "÷", "( )彩繽紛", "＝", "( )龍戲珠"], answers: ["十", "五", "二"], math: "10 ÷ 5 ＝ 2 (二龍戲珠)" },
+      { cat: "除法", pattern: ["( )面八方", "÷", "( )龍戲珠", "＝", "( )海升平"], answers: ["八", "二", "四"], math: "8 ÷ 2 ＝ 4 (四海升平)" },
+      { cat: "除法", pattern: ["( )全十美", "÷", "( )全其美", "＝", "( )體投地"], answers: ["十", "兩", "五"], math: "10 ÷ 2 ＝ 5 (五體投地)" },
+      { cat: "除法", pattern: ["( )全十美", "÷", "( )顏六色", "＝", "( )全其美"], answers: ["十", "五", "兩"], math: "10 ÷ 5 ＝ 2 (兩全其美)" },
+      { cat: "除法", pattern: ["( )室九空", "÷", "( )全其美", "＝", "( )湖四海"], answers: ["十", "兩", "五"], math: "10 ÷ 2 ＝ 5 (五湖四海)" },
+      { cat: "除法", pattern: ["( )拿九穩", "÷", "( )全十美", "＝", "( )針見血"], answers: ["十", "十", "一"], math: "10 ÷ 10 ＝ 1 (一針見血)" },
+      { cat: "除法", pattern: ["( )霄雲外", "÷", "( )顧茅廬", "＝", "( )思而行"], answers: ["九", "三", "三"], math: "9 ÷ 3 ＝ 3 (三思而行)" },
+      { cat: "除法", pattern: ["( )牛一毛", "÷", "( )生有幸", "＝", "( )長兩短"], answers: ["九", "三", "三"], math: "9 ÷ 3 ＝ 3 (三長兩短)" },
+      { cat: "除法", pattern: ["( )死一生", "÷", "( )牛一毛", "＝", "( )言為定"], answers: ["九", "九", "一"], math: "9 ÷ 9 ＝ 1 (一言為定)" },
+      { cat: "除法", pattern: ["( )仙過海", "÷", "( )全其美", "＝", "( )面楚歌"], answers: ["八", "兩", "四"], math: "8 ÷ 2 ＝ 4 (四面楚歌)" },
+      { cat: "除法", pattern: ["( )面玲瓏", "÷", "( )通八達", "＝", "( )龍戲珠"], answers: ["八", "四", "二"], math: "8 ÷ 4 ＝ 2 (二龍戲珠)" },
+      { cat: "除法", pattern: ["( )面威風", "÷", "( )海為家", "＝", "( )敗俱傷"], answers: ["八", "四", "兩"], math: "8 ÷ 4 ＝ 2 (兩敗俱傷)" },
+      { cat: "除法", pattern: ["( )手八腳", "÷", "( )仙過海", "＝", "( )手遮天"], answers: ["八", "八", "一"], math: "8 ÷ 8 ＝ 1 (一手遮天)" },
+      { cat: "除法", pattern: ["( )步之才", "÷", "( )步之才", "＝", "( )字千金"], answers: ["七", "七", "一"], math: "7 ÷ 7 ＝ 1 (一字千金)" },
+      { cat: "除法", pattern: ["( )竅生煙", "÷", "( )鳴驚人", "＝", "( )步之才"], answers: ["七", "一", "七"], math: "7 ÷ 1 ＝ 7 (七步之才)" },
+      { cat: "除法", pattern: ["( )親不認", "÷", "( )全其美", "＝", "( )顧茅廬"], answers: ["六", "兩", "三"], math: "6 ÷ 2 ＝ 3 (三顧茅廬)" },
+      { cat: "除法", pattern: ["( )神無主", "÷", "( )顧茅廬", "＝", "( )龍戲珠"], answers: ["六", "三", "二"], math: "6 ÷ 3 ＝ 2 (二龍戲珠)" },
+      { cat: "除法", pattern: ["( )神無主", "÷", "( )長兩短", "＝", "( )全其美"], answers: ["六", "三", "兩"], math: "6 ÷ 3 ＝ 2 (兩全其美)" },
+      { cat: "除法", pattern: ["( )親不認", "÷", "( )親不認", "＝", "( )日千里"], answers: ["六", "六", "一"], math: "6 ÷ 6 ＝ 1 (一日千里)" },
+      { cat: "除法", pattern: ["( )體投地", "÷", "( )顏六色", "＝", "( )鳴驚人"], answers: ["五", "五", "一"], math: "5 ÷ 5 ＝ 1 (一鳴驚人)" },
+      { cat: "除法", pattern: ["( )彩繽紛", "÷", "( )字千金", "＝", "( )湖四海"], answers: ["五", "一", "五"], math: "5 ÷ 1 ＝ 5 (五湖四海)" },
+      { cat: "除法", pattern: ["( )面楚歌", "÷", "( )全其美", "＝", "( )敗俱傷"], answers: ["四", "兩", "兩"], math: "4 ÷ 2 ＝ 2 (兩敗俱傷)" },
+      { cat: "除法", pattern: ["( )海升平", "÷", "( )龍戲珠", "＝", "( )全其美"], answers: ["四", "二", "兩"], math: "4 ÷ 2 ＝ 2 (兩全其美)" },
+      { cat: "除法", pattern: ["( )面八方", "÷", "( )面楚歌", "＝", "( )龍戲珠"], answers: ["八", "四", "二"], math: "8 ÷ 4 ＝ 2 (二龍戲珠)" },
+      { cat: "除法", pattern: ["( )通八達", "÷", "( )海為家", "＝", "( )針見血"], answers: ["四", "四", "一"], math: "4 ÷ 4 ＝ 1 (一針見血)" },
+      { cat: "除法", pattern: ["( )顧茅廬", "÷", "( )思而行", "＝", "( )手遮天"], answers: ["三", "三", "一"], math: "3 ÷ 3 ＝ 1 (一手遮天)" },
+      { cat: "除法", pattern: ["( )長兩短", "÷", "( )言為定", "＝", "( )生有幸"], answers: ["三", "一", "三"], math: "3 ÷ 1 ＝ 3 (三生有幸)" },
+      { cat: "除法", pattern: ["( )全其美", "÷", "( )龍戲珠", "＝", "( )目了然"], answers: ["兩", "二", "一"], math: "2 ÷ 2 ＝ 1 (一目了然)" },
+      { cat: "除法", pattern: ["( )敗俱傷", "÷", "( )全其美", "＝", "( )日千里"], answers: ["兩", "兩", "一"], math: "2 ÷ 2 ＝ 1 (一日千里)" },
+      { cat: "除法", pattern: ["( )年樹人", "÷", "( )折不撓", "＝", "( )言九鼎"], answers: ["百", "百", "一"], math: "100 ÷ 100 ＝ 1 (一言九鼎)" },
+
+      // 混合篇 (10題)
+      { cat: "混合", pattern: ["丟", "( )", "落", "( )", "＋", "( )步登天", "＝", "( )", "( )成群"], answers: ["三", "四", "一", "三", "五"], math: "(3+4) ＋ 1 ＝ 3+5 (8＝8)" },
+      { cat: "混合", pattern: ["( )從", "( )德", "＋", "( )鼓作氣", "＝", "( )年", "( )載"], answers: ["三", "四", "一", "三", "五"], math: "(3+4) ＋ 1 ＝ 3+5 (三從四德＋一鼓作氣＝三年五載)" },
+      { cat: "混合", pattern: ["( )體投地", "×", "( )竅生煙", "＝", "( )令", "( )申"], answers: ["五", "七", "三", "五"], math: "5 × 7 ＝ 35 (三令五申)" },
+      { cat: "混合", pattern: ["( )石", "( )鳥", "×", "退避( )舍", "＝", "( )頭", "( )臂"], answers: ["一", "二", "三", "三", "六"], math: "12 × 3 ＝ 36 (三頭六臂)" },
+      { cat: "混合", pattern: ["( )面", "( )方", "÷", "獨( )無( )", "＝", "( )面楚歌"], answers: ["四", "八", "一", "二", "四"], math: "48 ÷ 12 ＝ 4 (四面楚歌)" },
+      { cat: "混合", pattern: ["( )折不撓", "－", "( )牛", "( )虎", "＝", "( )面玲瓏"], answers: ["百", "九", "二", "八"], math: "100 － 92 ＝ 8 (八面玲瓏)" },
+      { cat: "混合", pattern: ["( )令", "( )申", "＋", "( )鳴驚人", "＝", "( )頭", "( )臂"], answers: ["三", "五", "一", "三", "六"], math: "35 ＋ 1 ＝ 36 (三頭六臂)" },
+      { cat: "混合", pattern: ["( )頭", "( )臂", "－", "( )字千金", "＝", "( )令", "( )申"], answers: ["三", "六", "一", "三", "五"], math: "36 － 1 ＝ 35 (三令五申)" },
+      { cat: "混合", pattern: ["( )年", "( )載", "＋", "( )體投地", "＝", "( )面埋伏"], answers: ["三", "五", "五", "十"], math: "(3+5) ＋ 5 ＝ 13 或 8 ＋ 2 ＝ 10" },
+      { cat: "混合", pattern: ["獨( )無( )", "×", "( )顧茅廬", "＝", "( )頭", "( )臂"], answers: ["一", "二", "三", "三", "六"], math: "12 × 3 ＝ 36 (三頭六臂)" }
+    ];
+
+    let currentCategory = 'all';
+    let currentList = [...QUESTION_BANK];
+    let currentIndex = 0;
+    let currentQ = null;
+    let userInputs = [];
+    let activeSlotIndex = 0;
+    let score = 0;
+    let soundEnabled = true;
+
+    function initGame() {
+      document.getElementById('totalCount').innerText = QUESTION_BANK.length;
+      updateFilterList();
+      loadQuestionByIndex(0);
+    }
+
+    function updateFilterList() {
+      if (currentCategory === 'all') {
+        currentList = [...QUESTION_BANK];
+      } else {
+        currentList = QUESTION_BANK.filter(q => q.cat === currentCategory);
+      }
+      currentIndex = 0;
+    }
+
+    function changeCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.cat-tab').forEach(b => {
+        b.className = 'cat-tab px-3 py-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0';
+      });
+      const activeBtn = document.getElementById('tab-' + cat);
+      if (activeBtn) {
+        activeBtn.className = 'cat-tab px-3 py-1 rounded-lg bg-rose-600 text-white shadow-sm shrink-0';
+      }
+      updateFilterList();
+      loadQuestionByIndex(0);
+    }
+
+    function loadQuestionByIndex(idx) {
+      if (currentList.length === 0) return;
+      if (idx < 0) idx = currentList.length - 1;
+      if (idx >= currentList.length) idx = 0;
+      currentIndex = idx;
+      currentQ = currentList[currentIndex];
+
+      userInputs = new Array(currentQ.answers.length).fill("");
+      activeSlotIndex = 0;
+
+      document.getElementById('categoryBadge').innerText = currentQ.cat + "題型";
+      document.getElementById('currentQIndexLabel').innerText = `第 ${currentIndex + 1} 題`;
+      document.getElementById('categoryRangeLabel').innerText = `(此類共 ${currentList.length} 題)`;
+
+      renderEquation();
+
+      const fb = document.getElementById('feedbackMsg');
+      fb.innerText = "點選空格後，在下方數字盤選字填入！";
+      fb.className = "min-h-[2.2rem] mt-1 text-base sm:text-lg font-bold flex items-center justify-center text-slate-500";
+
+      const proof = document.getElementById('mathProof');
+      proof.classList.add('hidden');
+      proof.innerText = "";
+    }
+
+    function nextQuestion() {
+      loadQuestionByIndex(currentIndex + 1);
+    }
+
+    function prevQuestion() {
+      loadQuestionByIndex(currentIndex - 1);
+    }
+
+    function nextRandomQuestion() {
+      const randIdx = Math.floor(Math.random() * currentList.length);
+      loadQuestionByIndex(randIdx);
+    }
+
+    function renderEquation() {
+      const container = document.getElementById('equationContainer');
+      container.innerHTML = "";
+      let slotCount = 0;
+
+      currentQ.pattern.forEach(part => {
+        if (part === "＋" || part === "－" || part === "×" || part === "÷") {
+          const span = document.createElement('span');
+          span.className = "text-amber-600 px-1 font-black";
+          span.innerText = part;
+          container.appendChild(span);
+        } else if (part === "＝") {
+          const span = document.createElement('span');
+          span.className = "text-emerald-600 px-1 font-black";
+          span.innerText = part;
+          container.appendChild(span);
+        } else if (part.includes("( )")) {
+          const segs = part.split("( )");
+          for (let i = 0; i < segs.length; i++) {
+            if (segs[i]) {
+              const textSpan = document.createElement('span');
+              textSpan.innerText = segs[i];
+              container.appendChild(textSpan);
+            }
+            if (i < segs.length - 1) {
+              const slotIdx = slotCount++;
+              const slot = document.createElement('div');
+              slot.className = `slot-box ${slotIdx === activeSlotIndex ? 'active' : ''}`;
+              slot.id = `slot-${slotIdx}`;
+              slot.innerText = userInputs[slotIdx] || "";
+              slot.onclick = () => selectSlot(slotIdx);
+              container.appendChild(slot);
+            }
+          }
+        } else {
+          const span = document.createElement('span');
+          span.innerText = part;
+          container.appendChild(span);
+        }
+      });
+    }
+
+    function selectSlot(idx) {
+      activeSlotIndex = idx;
+      document.querySelectorAll('.slot-box').forEach((el, i) => {
+        el.classList.toggle('active', i === idx);
+      });
+    }
+
+    function inputChar(ch) {
+      if (activeSlotIndex >= userInputs.length) return;
+      userInputs[activeSlotIndex] = ch;
+      const slot = document.getElementById(`slot-${activeSlotIndex}`);
+      if (slot) slot.innerText = ch;
+
+      if (activeSlotIndex < userInputs.length - 1) {
+        selectSlot(activeSlotIndex + 1);
+      }
+    }
+
+    function clearSlot() {
+      userInputs[activeSlotIndex] = "";
+      const slot = document.getElementById(`slot-${activeSlotIndex}`);
+      if (slot) slot.innerText = "";
+    }
+
+    function checkAnswer() {
+      const normalize = s => (s === '兩' ? '二' : s);
+
+      let isCorrect = true;
+      for (let i = 0; i < currentQ.answers.length; i++) {
+        const expected = currentQ.answers[i];
+        const entered = userInputs[i];
+        if (!entered || (normalize(entered) !== normalize(expected))) {
+          isCorrect = false;
+          break;
+        }
+      }
+
+      const fb = document.getElementById('feedbackMsg');
+      const proof = document.getElementById('mathProof');
+
+      if (isCorrect) {
+        score += 10;
+        document.getElementById('scoreDisplay').innerText = `得分: ${score}`;
+        fb.innerText = "🎉 太厲害了！完全正確！頭腦好靈光！";
+        fb.className = "min-h-[2.2rem] mt-1 text-lg sm:text-xl font-black flex items-center justify-center text-emerald-600";
+        
+        proof.classList.remove('hidden');
+        proof.innerText = `💡 驗證邏輯：${currentQ.math}`;
+
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.7 }
+        });
+
+        speak("太棒了！完全正確！");
+      } else {
+        fb.innerText = "❌ 好像不太對喔，再檢查算式想一想！";
+        fb.className = "min-h-[2.2rem] mt-1 text-base sm:text-lg font-black flex items-center justify-center text-rose-600";
+        speak("再想一想喔！");
+      }
+    }
+
+    function showAnswer() {
+      userInputs = [...currentQ.answers];
+      userInputs.forEach((ans, i) => {
+        const slot = document.getElementById(`slot-${i}`);
+        if (slot) slot.innerText = ans;
+      });
+
+      const fb = document.getElementById('feedbackMsg');
+      fb.innerText = "💡 答案已為您公佈，動動腦記起來！";
+      fb.className = "min-h-[2.2rem] mt-1 text-base sm:text-lg font-bold flex items-center justify-center text-blue-600";
+
+      const proof = document.getElementById('mathProof');
+      proof.classList.remove('hidden');
+      proof.innerText = `💡 答案解析：${currentQ.math}`;
+
+      speak("答案是：" + currentQ.answers.join("、"));
+    }
+
+    function speak(text) {
+      if (!soundEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'zh-TW';
+      utter.rate = 1.0;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('soundBtn');
+      btn.innerText = soundEnabled ? '🔊' : '🔇';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const numMap = {
+        '1': '一', '2': '二', '3': '三', '4': '四', '5': '五',
+        '6': '六', '7': '七', '8': '八', '9': '九', '0': '十'
+      };
+      if (numMap[e.key]) {
+        inputChar(numMap[e.key]);
+      } else if (e.key === 'Backspace') {
+        clearSlot();
+      } else if (e.key === 'Enter') {
+        checkAnswer();
+      } else if (e.key === 'ArrowRight') {
+        nextQuestion();
+      } else if (e.key === 'ArrowLeft') {
+        prevQuestion();
+      }
+    });
+
+    window.onload = initGame;
+  </script>
+</body>
+</html>
